@@ -10,6 +10,8 @@ This code is not good for read ;-; i will fix it
 - Block Selection (1..7)
 - Eye (Don't look at it)
 - Good tile collision (not perfect)
+- (new) shadow
+- (new) wall and collision update
 
 ## Screenshots
 ![1 Image](assets/screenshots/1.png)

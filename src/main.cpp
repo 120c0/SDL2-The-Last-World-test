@@ -19,7 +19,8 @@ struct Tile
 {
   SDL_FRect rect;
   SDL_Rect texture_rect;
-  float light;
+  bool is_solid = true;
+  float light = 1.f;
 };
 struct MovementContext
 {
@@ -39,7 +40,7 @@ std::list<Tile> get_tiles_collider(const SDL_FRect &rect, const std::vector<Tile
   {
     if(
       tile.rect.x + tile.rect.w > rect.x && tile.rect.x < rect.x + rect.w &&
-      tile.rect.y + tile.rect.h > rect.y && tile.rect.y < rect.y + rect.h
+      tile.rect.y + tile.rect.h > rect.y && tile.rect.y < rect.y + rect.h && tile.is_solid
     ) hitted_tiles.push_back(tile);
   }
   return hitted_tiles;
@@ -56,7 +57,7 @@ void move_rect_on_world(SDL_FRect &rect, MovementContext &movement, std::vector<
       rect.x = tile.rect.x - rect.w;
       movement.acceleration.x = 0.f;
     }
-    if(movement.to.x < 0)
+    else if(movement.to.x < 0)
     {
       rect.x = tile.rect.x + tile.rect.w;
       movement.acceleration.x = 0.f;
@@ -73,7 +74,7 @@ void move_rect_on_world(SDL_FRect &rect, MovementContext &movement, std::vector<
       rect.y = tile.rect.y - rect.h;
       movement.acceleration.y = 0;
     }
-    if(movement.to.y < 0)
+    else if(movement.to.y < 0)
     {
       rect.y = tile.rect.y + tile.rect.h;
       movement.acceleration.y = 0;
@@ -84,16 +85,17 @@ void move_rect_on_world(SDL_FRect &rect, MovementContext &movement, std::vector<
 void generate_world(std::vector<Tile> &tiles, float margin_top = 500.f - WORLD_HEIGHT * 20.f) noexcept
 {
   srand(time(NULL));
-  int y = rand() % WORLD_HEIGHT + 5;
+  int y = rand() % WORLD_HEIGHT + 10;
   for(int x = 0; x < WORLD_WIDTH; x++)
   {
     for(int i = 0; i < y; i++)
     {
+      float l = 0.8f;
       if(i == y - 1)
       {
         tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8, 0, 8, 8}});
         if(rand() % 10 == 1)
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 5, 8 * 2, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 5, 8 * 2, 8, 8}, false});
         else if(rand() % 30 == 1)
         {
           tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 3, 8 * 4, 8, 8}});
@@ -112,33 +114,33 @@ void generate_world(std::vector<Tile> &tiles, float margin_top = 500.f - WORLD_H
         }
         else if(rand() % 15 == 1)
         {
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 2, 8 * 5, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 2, 8 * 5, 8, 8}, false});
         }
         else if(rand() % 15 == 1)
         {
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 2, 8 * 4, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i++, BLOCK_SIZE, BLOCK_SIZE}, {8 * 2, 8 * 4, 8, 8}, false});
         }
         continue;
       }
-      if(i < y / 2.f)
+      if(i < y - 4)
       {
         if(rand() % 80 == 1)
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 6, 8 * 3, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 6, 8 * 3, 8, 8}, true, 1.f - l / (i - y)});
         else if(rand() % 50 == 1)
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 0, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 0, 8, 8}, true, 1.f - l / (i - y)});
         else if(rand() % 40 == 1)
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 1, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 1, 8, 8}, true, 1.f - l / (i - y)});
         else if(rand() % 30 == 1)
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 2, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 2, 8, 8}, true, 1.f - l / (i - y)});
         else
-          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 6, 8 * 2, 8, 8}});
+          tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8 * 6, 8 * 2, 8, 8}, true, 1.f - l / (i - y)});
       }
       else if(i >= y / 2)
-        tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8, 8, 8, 8}});
+        tiles.push_back(Tile{{BLOCK_SIZE * x, margin_top + BLOCK_SIZE * WORLD_HEIGHT - BLOCK_SIZE * i, BLOCK_SIZE, BLOCK_SIZE}, {8, 8, 8, 8}, true, (i < y - 2) ? 1.f - l / (i - y) : 1.f});
     }
     if(rand() % 3 != 1)
       y += (rand() % 2) == 1 ? 1 : -1;
-    if(y <= 1) y++;
+    if(y <= 8) y++;
   }
 }
 
@@ -182,6 +184,11 @@ Tile get_tile_from_id(const Uint32 ID, SDL_Point scrolled) noexcept
         (float) std::round((scrolled.x - (int) (BLOCK_SIZE / 2)) / BLOCK_SIZE) * BLOCK_SIZE,
         (float) std::round((scrolled.y - (int) (BLOCK_SIZE / 2)) / BLOCK_SIZE) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE}, {8 * 7, 8 * 4, 8, 8}};
       break;
+    case 8:
+      tile = Tile{{
+        (float) std::round((scrolled.x - (int) (BLOCK_SIZE / 2)) / BLOCK_SIZE) * BLOCK_SIZE,
+        (float) std::round((scrolled.y - (int) (BLOCK_SIZE / 2)) / BLOCK_SIZE) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE}, {8 * 8, 8 * 3, 8, 8}};
+      break;
   }
   return tile;
 }
@@ -202,6 +209,7 @@ int main(void)
   bool player_move_right = false, player_move_left = false;
 
   std::vector<Tile> world_tilemap;
+  std::vector<Tile> world_tilemap_background;
   SDL_Point mouse_position;
 
   SDL_FPoint camera_scroll = {0.f, 0.f};
@@ -267,6 +275,7 @@ int main(void)
         if(event.key.keysym.sym == SDLK_r)
         {
           world_tilemap.clear();
+          world_tilemap_background.clear();
           generate_world(world_tilemap);
         }
         if(event.key.keysym.sym >= SDLK_0 && event.key.keysym.sym <= SDLK_9)
@@ -299,7 +308,10 @@ int main(void)
     {
       if(delay_action + 50 < SDL_GetTicks())
       {
-        world_tilemap.push_back(get_tile_from_id(current_block, scrolled));
+        if(current_block >= 6 && current_block <= 8)
+          world_tilemap_background.push_back(get_tile_from_id(current_block, scrolled));
+        else
+          world_tilemap.push_back(get_tile_from_id(current_block, scrolled));
         delay_action = SDL_GetTicks();
       }
     }
@@ -307,7 +319,6 @@ int main(void)
     if(eye_tick + 500 < SDL_GetTicks())
     {
       sun.texture_rect.x = 8 * (eye_frame += eye_frame >= 9 ? -eye_frame + 3 : 1);
-
       eye_tick = SDL_GetTicks();
     }
     player_movement.to = SDL_FPoint{
@@ -338,11 +349,17 @@ int main(void)
 
     SDL_RenderCopyExF(renderer.get(), tileset_texture, &sun.texture_rect, &sun_scrolled, 0, NULL, SDL_FLIP_NONE);
 
+    for(Tile tile : world_tilemap_background)
+    {
+      tile.rect.x += camera_scroll.x;
+      tile.rect.y += camera_scroll.y;
+      SDL_RenderCopyF(renderer.get(), ::tileset_texture, &tile.texture_rect, &tile.rect);
+    }
     for(Tile tile : world_tilemap)
     {
       tile.rect.x += camera_scroll.x;
       tile.rect.y += camera_scroll.y;
-
+      SDL_SetTextureColorMod(::tileset_texture, (Uint8) std::round(255 * tile.light), (Uint8) std::round(255 * tile.light), (Uint8) std::round(255 * tile.light));
       SDL_RenderCopyF(renderer.get(), ::tileset_texture, &tile.texture_rect, &tile.rect);
     }
 
